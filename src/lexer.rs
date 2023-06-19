@@ -12,6 +12,8 @@ pub enum Token {
     RParen,
     /// Represents atom.
     Atom(char),
+    /// Represents symbols.
+    Symbol(String),
 }
 
 impl Token {
@@ -26,7 +28,7 @@ impl Token {
 
 pub fn tokenize<I>(iter: &mut Peekable<I>) -> Vec<Token>
 where
-    I: Iterator<Item = char> + Debug,
+    I: Iterator<Item = char>,
 {
     while consume_whitespace(iter) {
         continue;
@@ -41,11 +43,11 @@ where
 
 fn proceed_one<I>(iter: &mut Peekable<I>) -> Option<Token>
 where
-    I: Iterator<Item = char> + Debug,
+    I: Iterator<Item = char>,
 {
     consume_lparen(iter)
         .or_else(|| consume_rparen(iter))
-        .or_else(|| consume_number(iter))
+        .or_else(|| consume_symbol(iter))
 }
 
 fn consume_whitespace<I>(iter: &mut Peekable<I>) -> bool
@@ -85,14 +87,18 @@ where
     consume(iter, ')')
 }
 
-fn consume_number<I>(iter: &mut Peekable<I>) -> Option<Token>
+fn consume_symbol<I>(iter: &mut Peekable<I>) -> Option<Token>
 where
-    I: Iterator<Item = char> + Debug,
+    I: Iterator<Item = char>,
 {
     if iter.peek().is_none() {
         return None;
     }
     let value = IteratorExt::take_while(iter, |c| *c != ')').collect::<String>();
+    consume_number(value.as_str()).or_else(|| Some(Token::Symbol(value)))
+}
+
+fn consume_number(value: &str) -> Option<Token> {
     value.parse::<i64>().map(Token::Integer).ok()
 }
 
@@ -120,12 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn return_42() {
-        assert_eq!(
-            tokenize(&mut "(42)".chars().peekable()),
-            vec![Token::LParen, Token::Integer(42), Token::RParen]
-        );
-        // multiple parens
+    fn nested_paren() {
         assert_eq!(
             tokenize(&mut "((42))".chars().peekable()),
             vec![
@@ -135,6 +136,26 @@ mod tests {
                 Token::RParen,
                 Token::RParen
             ]
+        );
+    }
+
+    #[test]
+    fn return_42() {
+        assert_eq!(
+            tokenize(&mut "42".chars().peekable()),
+            vec![Token::Integer(42)]
+        );
+        assert_eq!(
+            tokenize(&mut "(42)".chars().peekable()),
+            vec![Token::LParen, Token::Integer(42), Token::RParen]
+        );
+    }
+
+    #[test]
+    fn return_symbols() {
+        assert_eq!(
+            tokenize(&mut "(a)".chars().peekable()),
+            vec![Token::LParen, Token::Symbol("a".to_string()), Token::RParen]
         );
     }
 }
