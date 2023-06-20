@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.71"
+chumsky = "0.9.2"
 clap = { version = "4.3.4", features = ["derive"] }
 ezio = "0.1.2"
 thiserror = "1.0.40"
