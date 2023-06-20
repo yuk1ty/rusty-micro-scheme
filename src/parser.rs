@@ -5,6 +5,8 @@ use chumsky::prelude::*;
 pub enum Token {
     /// Represents numbers like `42`.
     Integer(i64),
+    /// Represents floats like `3.14`.
+    Float(f64),
     /// Represents symbols.
     Symbol(String),
 }
@@ -26,6 +28,10 @@ impl SExpr {
     pub fn integer(op: i64) -> SExpr {
         SExpr::Atom(Token::Integer(op))
     }
+
+    pub fn float(op: f64) -> SExpr {
+        SExpr::Atom(Token::Float(op))
+    }
 }
 
 pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
@@ -42,6 +48,7 @@ pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
 
 fn symbol() -> impl Parser<char, SExpr, Error = Simple<char>> {
     filter::<_, _, Simple<char>>(|c: &char| c.is_alphabetic())
+        .labelled("symbol")
         .repeated()
         .at_least(1)
         .collect::<String>()
@@ -49,7 +56,13 @@ fn symbol() -> impl Parser<char, SExpr, Error = Simple<char>> {
 }
 
 fn num() -> impl Parser<char, SExpr, Error = Simple<char>> {
-    text::int(10).from_str().unwrapped().map(SExpr::integer)
+    let int = text::int(10).map(|s: String| SExpr::integer(s.parse::<i64>().unwrap()));
+    let float = text::int(10)
+        .chain(just('.'))
+        .chain::<char, _, _>(text::digits(10))
+        .collect::<String>()
+        .map(|s| SExpr::float(s.parse::<f64>().unwrap()));
+    choice((float, int))
 }
 
 #[cfg(test)]
@@ -80,6 +93,10 @@ mod tests {
         assert_eq!(
             parser().parse("(42)").unwrap(),
             SExpr::List(vec![SExpr::Atom(Token::Integer(42))])
+        );
+        assert_eq!(
+            parser().parse("(3.14)").unwrap(),
+            SExpr::List(vec![SExpr::Atom(Token::Float(3.14))])
         );
     }
 
