@@ -6,6 +6,7 @@ use ezio::prelude::*;
 use rusty_micro_scheme::{
     command::{Mode, Opts},
     parser::parser,
+    repl::Repl,
 };
 
 fn main() -> Result<()> {
@@ -38,7 +39,10 @@ fn main() -> Result<()> {
                     .unwrap()
             }
         }
-        Mode::Repl => unimplemented!(),
+        Mode::Repl => {
+            let mut repl = Repl::new("history.txt")?;
+            repl.run()?;
+        }
     }
     Ok(())
 }
