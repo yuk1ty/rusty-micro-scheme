@@ -9,6 +9,8 @@ pub enum Token {
     Float(f64),
     /// Represents symbols.
     Symbol(String),
+    /// Represents string literals.
+    String(String),
 }
 
 /// Represents S-expression.
@@ -24,11 +26,17 @@ impl SExpr {
         SExpr::Atom(Token::Symbol(op))
     }
 
+    /// Convenient construct for `SExpr::Atom(Token::String)`.
+    pub fn string(op: String) -> SExpr {
+        SExpr::Atom(Token::String(op))
+    }
+
     /// Convenient constructor for `SExpr::Atom(Token::Integer)`.
     pub fn integer(op: i64) -> SExpr {
         SExpr::Atom(Token::Integer(op))
     }
 
+    /// Convenient constructor for `SExpr::Atom(Token::Float)`.
     pub fn float(op: f64) -> SExpr {
         SExpr::Atom(Token::Float(op))
     }
@@ -41,9 +49,19 @@ pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
             .repeated()
             .map(SExpr::List)
             .delimited_by(just('('), just(')'))
+            .or(string())
             .or(symbol())
             .or(num())
     })
+}
+
+fn string() -> impl Parser<char, SExpr, Error = Simple<char>> {
+    just('"')
+        .chain(filter(|c: &char| *c != '"').repeated())
+        .chain(just('"'))
+        .collect::<String>()
+        .map(SExpr::string)
+        .labelled("parsing strings")
 }
 
 fn symbol() -> impl Parser<char, SExpr, Error = Simple<char>> {
@@ -101,6 +119,14 @@ mod tests {
     }
 
     #[test]
+    fn strings() {
+        assert_eq!(
+            parser().parse(r#"("aiueo")"#).unwrap(),
+            SExpr::List(vec![SExpr::Atom(Token::String("\"aiueo\"".to_string()))])
+        );
+    }
+
+    #[test]
     fn symbols() {
         assert_eq!(
             parser().parse("(a)").unwrap(),
@@ -111,11 +137,12 @@ mod tests {
     #[test]
     fn compound_symbols() {
         assert_eq!(
-            parser().parse("(a 42 b)").unwrap(),
+            parser().parse("(a 42 b \"foo\")").unwrap(),
             SExpr::List(vec![
                 SExpr::Atom(Token::Symbol("a".to_string())),
                 SExpr::Atom(Token::Integer(42)),
-                SExpr::Atom(Token::Symbol("b".to_string()))
+                SExpr::Atom(Token::Symbol("b".to_string())),
+                SExpr::Atom(Token::String("\"foo\"".to_string())),
             ])
         );
     }
