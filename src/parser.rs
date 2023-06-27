@@ -20,6 +20,7 @@ pub enum Token {
 pub enum SExpr {
     Atom(Token),
     List(Vec<SExpr>),
+    Quote(Box<SExpr>),
 }
 
 impl SExpr {
@@ -55,11 +56,13 @@ pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
             .repeated()
             .map(SExpr::List)
             .delimited_by(just('('), just(')'))
-            .or(string())
-            .or(symbol())
-            .or(bool())
-            .or(num())
+            .or(quote())
+            .or(atom())
     })
+}
+
+fn atom() -> impl Parser<char, SExpr, Error = Simple<char>> {
+    symbol().or(string()).or(bool()).or(num())
 }
 
 fn string() -> impl Parser<char, SExpr, Error = Simple<char>> {
@@ -94,6 +97,21 @@ fn num() -> impl Parser<char, SExpr, Error = Simple<char>> {
         .collect::<String>()
         .map(|s| SExpr::float(s.parse::<f64>().unwrap()));
     choice((float, int))
+}
+
+fn quote() -> impl Parser<char, SExpr, Error = Simple<char>> {
+    // TODO: The quoted list is insufficient. For example, this can't parse ('(a '(b c))) for now.
+    just("'")
+        .or(just("quote").padded())
+        .ignore_then(recursive(|sexpr| {
+            sexpr
+                .padded()
+                .repeated()
+                .map(SExpr::List)
+                .delimited_by(just('('), just(')'))
+                .or(atom())
+        }))
+        .map(|s| SExpr::Quote(Box::new(s)))
 }
 
 #[cfg(test)]
@@ -168,6 +186,18 @@ mod tests {
                 SExpr::Atom(Token::Bool(true)),
                 SExpr::Atom(Token::Bool(false)),
             ])
+        );
+    }
+
+    #[test]
+    fn quote() {
+        assert_eq!(
+            parser().parse("'(a b c)").unwrap(),
+            SExpr::Quote(Box::new(SExpr::List(vec![
+                SExpr::Atom(Token::Symbol("a".to_string())),
+                SExpr::Atom(Token::Symbol("b".to_string())),
+                SExpr::Atom(Token::Symbol("c".to_string())),
+            ])))
         );
     }
 }
