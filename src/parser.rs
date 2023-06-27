@@ -11,6 +11,8 @@ pub enum Token {
     Symbol(String),
     /// Represents string literals.
     String(String),
+    /// Represents boolean.
+    Bool(bool),
 }
 
 /// Represents S-expression.
@@ -40,6 +42,10 @@ impl SExpr {
     pub fn float(op: f64) -> SExpr {
         SExpr::Atom(Token::Float(op))
     }
+
+    pub fn bool(op: char) -> SExpr {
+        SExpr::Atom(Token::Bool(op == 't'))
+    }
 }
 
 pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
@@ -51,6 +57,7 @@ pub fn parser() -> impl Parser<char, SExpr, Error = Simple<char>> {
             .delimited_by(just('('), just(')'))
             .or(string())
             .or(symbol())
+            .or(bool())
             .or(num())
     })
 }
@@ -62,6 +69,12 @@ fn string() -> impl Parser<char, SExpr, Error = Simple<char>> {
         .collect::<String>()
         .map(SExpr::string)
         .labelled("parsing strings")
+}
+
+fn bool() -> impl Parser<char, SExpr, Error = Simple<char>> {
+    just('#')
+        .then(just('t').or(just('f')))
+        .map(|(_, s)| SExpr::bool(s))
 }
 
 fn symbol() -> impl Parser<char, SExpr, Error = Simple<char>> {
@@ -143,6 +156,17 @@ mod tests {
                 SExpr::Atom(Token::Integer(42)),
                 SExpr::Atom(Token::Symbol("b".to_string())),
                 SExpr::Atom(Token::String("\"foo\"".to_string())),
+            ])
+        );
+    }
+
+    #[test]
+    fn bool() {
+        assert_eq!(
+            parser().parse("(#t #f)").unwrap(),
+            SExpr::List(vec![
+                SExpr::Atom(Token::Bool(true)),
+                SExpr::Atom(Token::Bool(false)),
             ])
         );
     }
