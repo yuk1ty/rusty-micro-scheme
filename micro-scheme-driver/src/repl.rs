@@ -1,9 +1,8 @@
 use std::path::Path;
 
 use anyhow::Result;
+use micro_scheme_compiler::run;
 use rustyline::{error::ReadlineError, DefaultEditor};
-
-use crate::compiler;
 
 use super::Executor;
 
@@ -39,7 +38,7 @@ impl<P: AsRef<Path>> Executor for Repl<P> {
                 }
                 Ok(line) => {
                     self.editor.add_history_entry(line.as_str())?;
-                    compiler::run("repl", line)?;
+                    run("repl", line)?;
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("CTRL-C");

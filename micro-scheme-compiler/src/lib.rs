@@ -1,3 +1,5 @@
+mod parser;
+
 use anyhow::Result;
 use ariadne::{Label, Report, ReportKind, Source};
 use chumsky::{error::SimpleReason, Parser};

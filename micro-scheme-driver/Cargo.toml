@@ -1,0 +1,13 @@
+[package]
+name = "micro-scheme-driver"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+clap = { version = "4.3.4", features = ["derive"] }
+micro-scheme-compiler = { path = "../micro-scheme-compiler" }
+ezio = "0.1.2"
+rustyline = "12.0.0"

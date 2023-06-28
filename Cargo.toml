@@ -3,11 +3,13 @@ name = "rusty-micro-scheme"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["micro-scheme-compiler", "micro-scheme-driver", "micro-scheme-vm"]
+
 [dependencies]
+anyhow.workspace = true
+micro-scheme-driver = { path = "./micro-scheme-driver" }
+
+[workspace.dependencies]
 anyhow = "1.0.71"
-ariadne = "0.3.0"
-chumsky = "0.9.2"
-clap = { version = "4.3.4", features = ["derive"] }
-ezio = "0.1.2"
-rustyline = "12.0.0"
 thiserror = "1.0.40"
