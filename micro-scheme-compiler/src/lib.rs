@@ -1,3 +1,5 @@
+pub mod ast;
+pub mod ir;
 mod parser;
 
 use anyhow::Result;
