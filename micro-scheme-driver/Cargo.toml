@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow.workspace = true
+ansi_term.workspace = true
 clap = { version = "4.3.4", features = ["derive"] }
 micro-scheme-compiler = { path = "../micro-scheme-compiler" }
 ezio = "0.1.2"

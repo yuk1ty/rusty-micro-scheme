@@ -12,4 +12,5 @@ micro-scheme-driver = { path = "./micro-scheme-driver" }
 
 [workspace.dependencies]
 anyhow = "1.0.71"
+ansi_term = "0.12.1"
 thiserror = "1.0.40"

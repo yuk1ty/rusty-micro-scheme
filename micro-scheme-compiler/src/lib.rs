@@ -2,16 +2,20 @@ pub mod ast;
 pub mod ir;
 mod parser;
 
+use ansi_term::Colour;
 use anyhow::Result;
 use ariadne::{Label, Report, ReportKind, Source};
 use chumsky::{error::SimpleReason, Parser};
 
-use crate::parser::parser;
+use crate::{ir::ir_codegen, parser::parser};
 
 pub fn run(path: &str, source: String) -> Result<()> {
     let (output, errors) = parser().parse_recovery(source.clone());
     if let Some(output) = output {
-        println!("{:?}", output);
+        println!("{} 🔥 -> {:?}", Colour::Green.paint("Compiled"), output);
+
+        let ir = ir_codegen(output);
+        println!("{} 🔥 -> {:?}", Colour::Yellow.paint("IR      "), ir);
     }
 
     for e in errors {

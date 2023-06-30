@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use ansi_term::Colour;
 use anyhow::Result;
 use micro_scheme_compiler::run;
 use rustyline::{error::ReadlineError, DefaultEditor};
@@ -17,7 +18,7 @@ impl<P: AsRef<Path>> Repl<P> {
     pub fn new(history_file_path: P) -> Result<Self> {
         let mut editor = DefaultEditor::new()?;
         if editor.load_history(&history_file_path).is_err() {
-            println!("No previous history.");
+            println!("😲 No previous history.");
         }
 
         Ok(Self {
@@ -30,10 +31,12 @@ impl<P: AsRef<Path>> Repl<P> {
 impl<P: AsRef<Path>> Executor for Repl<P> {
     fn run(mut self) -> Result<()> {
         loop {
-            let readline = self.editor.readline(">> ");
+            let readline = self
+                .editor
+                .readline(format!("{}", Colour::Cyan.paint("❯❯❯ ")).as_str());
             match readline {
                 Ok(line) if line == EXIT => {
-                    println!("Bye!");
+                    println!("{} 👋", Colour::Cyan.bold().paint("Bye!"));
                     break;
                 }
                 Ok(line) => {
@@ -49,7 +52,7 @@ impl<P: AsRef<Path>> Executor for Repl<P> {
                     break;
                 }
                 Err(err) => {
-                    println!("Error: {:?}", err);
+                    println!("😱 Error: {:?}", err);
                     break;
                 }
             }
