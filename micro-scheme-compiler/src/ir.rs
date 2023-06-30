@@ -1,27 +1,23 @@
-use std::rc::Rc;
-
 use anyhow::Result;
 
 use crate::ast::{SExpr, Token};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Ir {
     /// Represents `ldc` instruction. This piles quote/self-evaluated form on stack.
     Ldc(Ldc),
     /// Represents `ldg` instruction. This piles the global variable symbols on stack.
     Ldg(Ldg),
-    /// Represents tokens excluding symbols.
-    Raw(Token),
     /// Stop the execution and return the value on top of the stack.
     Stop,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ldc {
-    pub expr: Rc<SExpr>,
+    pub expr: Box<SExpr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ldg {
     // TODO only Token::Symbol comes, prepare the specific type
     // to represent that
@@ -45,8 +41,10 @@ fn eval(expr: SExpr, ir_generated: &mut Vec<Ir>) -> Result<()> {
                 expr: Token::Symbol(s),
             }));
         }
-        SExpr::Atom(token) => {
-            ir_generated.push(Ir::Raw(token));
+        expr @ SExpr::Atom(_) => {
+            ir_generated.push(Ir::Ldc(Ldc {
+                expr: Box::new(expr),
+            }));
         }
         SExpr::List(list) => {
             for expr in list {
@@ -55,4 +53,39 @@ fn eval(expr: SExpr, ir_generated: &mut Vec<Ir>) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stack_self_evaluation_form_as_ldc() {
+        let expr = SExpr::integer(1);
+        let ir = ir_codegen(expr).unwrap();
+        assert_eq!(
+            ir,
+            vec![
+                Ir::Ldc(Ldc {
+                    expr: Box::new(SExpr::integer(1))
+                }),
+                Ir::Stop
+            ]
+        );
+    }
+
+    #[test]
+    fn stack_simple_quote_as_ldc() {
+        let expr = SExpr::Quote(Box::new(SExpr::symbol("a".to_string())));
+        let ir = ir_codegen(expr).unwrap();
+        assert_eq!(
+            ir,
+            vec![
+                Ir::Ldc(Ldc {
+                    expr: Box::new(SExpr::symbol("a".to_string()))
+                }),
+                Ir::Stop
+            ]
+        );
+    }
 }

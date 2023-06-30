@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::ast::SExpr;
 use chumsky::prelude::*;
 
@@ -65,7 +63,7 @@ fn quote() -> impl Parser<char, SExpr, Error = Simple<char>> {
                 .delimited_by(just('('), just(')'))
                 .or(atom())
         }))
-        .map(|s| SExpr::Quote(Rc::new(s)))
+        .map(|s| SExpr::Quote(Box::new(s)))
 }
 
 #[cfg(test)]
@@ -149,7 +147,7 @@ mod tests {
     fn quote() {
         assert_eq!(
             parser().parse("'(a b c)").unwrap(),
-            SExpr::Quote(Rc::new(SExpr::List(vec![
+            SExpr::Quote(Box::new(SExpr::List(vec![
                 SExpr::Atom(Token::Symbol("a".to_string())),
                 SExpr::Atom(Token::Symbol("b".to_string())),
                 SExpr::Atom(Token::Symbol("c".to_string())),

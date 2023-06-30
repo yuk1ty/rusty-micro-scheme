@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 /// Inner data structure to represent Atom.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -20,7 +18,7 @@ pub enum Token {
 pub enum SExpr {
     Atom(Token),
     List(Vec<SExpr>),
-    Quote(Rc<SExpr>),
+    Quote(Box<SExpr>),
 }
 
 impl SExpr {
