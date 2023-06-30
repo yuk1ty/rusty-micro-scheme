@@ -35,6 +35,9 @@ impl<P: AsRef<Path>> Executor for Repl<P> {
                 .editor
                 .readline(format!("{}", Colour::Cyan.paint("❯❯❯ ")).as_str());
             match readline {
+                Ok(line) if line.len() == 0 => {
+                    continue;
+                }
                 Ok(line) if line == EXIT => {
                     println!("{} 👋", Colour::Cyan.bold().paint("Bye!"));
                     break;
