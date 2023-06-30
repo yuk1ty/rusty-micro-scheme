@@ -42,6 +42,7 @@ impl SExpr {
         SExpr::Atom(Token::Float(op))
     }
 
+    /// Convenient constructor for `SExpr::Atom(Token::Bool)`
     pub fn bool(op: char) -> SExpr {
         SExpr::Atom(Token::Bool(op == 't'))
     }

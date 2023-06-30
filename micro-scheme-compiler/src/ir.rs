@@ -2,8 +2,12 @@ use anyhow::Result;
 
 use crate::ast::{SExpr, Token};
 
+/// Represents instructions for the virtual machine.
+/// micro Scheme has four registers, S, E, C and D.
+/// These instructions are interepreted by the VM.
+/// Each instruction can conduct changing the state of VM.
 #[derive(Debug, PartialEq)]
-pub enum Ir {
+pub enum Inst {
     /// Represents `ldc` instruction. This piles quote/self-evaluated form on stack.
     Ldc(Ldc),
     /// Represents `ldg` instruction. This piles the global variable symbols on stack.
@@ -24,25 +28,26 @@ pub struct Ldg {
     pub expr: Token,
 }
 
-pub fn ir_codegen(expr: SExpr) -> Result<Vec<Ir>> {
+/// Generates IR for micro Scheme.
+pub fn ir_codegen(expr: SExpr) -> Result<Vec<Inst>> {
     let mut ir_generated = Vec::new();
     eval(expr, &mut ir_generated)?;
-    ir_generated.push(Ir::Stop);
+    ir_generated.push(Inst::Stop);
     Ok(ir_generated)
 }
 
-fn eval(expr: SExpr, ir_generated: &mut Vec<Ir>) -> Result<()> {
+fn eval(expr: SExpr, ir_generated: &mut Vec<Inst>) -> Result<()> {
     match expr {
         SExpr::Quote(expr) => {
-            ir_generated.push(Ir::Ldc(Ldc { expr }));
+            ir_generated.push(Inst::Ldc(Ldc { expr }));
         }
         SExpr::Atom(Token::Symbol(s)) => {
-            ir_generated.push(Ir::Ldg(Ldg {
+            ir_generated.push(Inst::Ldg(Ldg {
                 expr: Token::Symbol(s),
             }));
         }
         expr @ SExpr::Atom(_) => {
-            ir_generated.push(Ir::Ldc(Ldc {
+            ir_generated.push(Inst::Ldc(Ldc {
                 expr: Box::new(expr),
             }));
         }
@@ -66,10 +71,10 @@ mod tests {
         assert_eq!(
             ir,
             vec![
-                Ir::Ldc(Ldc {
+                Inst::Ldc(Ldc {
                     expr: Box::new(SExpr::integer(1))
                 }),
-                Ir::Stop
+                Inst::Stop
             ]
         );
     }
@@ -81,10 +86,10 @@ mod tests {
         assert_eq!(
             ir,
             vec![
-                Ir::Ldc(Ldc {
+                Inst::Ldc(Ldc {
                     expr: Box::new(SExpr::symbol("a".to_string()))
                 }),
-                Ir::Stop
+                Inst::Stop
             ]
         );
     }
