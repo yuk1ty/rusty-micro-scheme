@@ -12,6 +12,8 @@ pub enum Ir {
     Ldg(Ldg),
     /// Represents tokens excluding symbols.
     Raw(Token),
+    /// Stop the execution and return the value on top of the stack.
+    Stop,
 }
 
 #[derive(Debug)]
@@ -29,6 +31,7 @@ pub struct Ldg {
 pub fn ir_codegen(expr: SExpr) -> Result<Vec<Ir>> {
     let mut ir_generated = Vec::new();
     eval(expr, &mut ir_generated)?;
+    ir_generated.push(Ir::Stop);
     Ok(ir_generated)
 }
 
